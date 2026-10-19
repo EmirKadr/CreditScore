@@ -18,4 +18,11 @@ public class CustomerService(ICustomerRepository customerRepository) : ICustomer
             TotalDebt = totalDebt
         });
     }
+
+    public async Task<Customer?> UpdateCustomerFinancesAsync(string socialSecurityNumber, decimal annualIncome, decimal totalDebt)
+    {
+        CustomerValidator.ValidateFinances(annualIncome, totalDebt);
+
+        return await customerRepository.UpdateFinancesAsync(socialSecurityNumber, annualIncome, totalDebt);
+    }
 }

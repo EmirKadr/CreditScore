@@ -5,6 +5,8 @@ Ett Web API byggt med ASP.NET Core (Minimal APIs) som beräknar en kunds kreditv
 ## Funktionalitet
 
 - `GET /api/customers/{socialSecurityNumber}/credit-score` – returnerar kundens kreditvärde, eller `404 Not Found` om kunden inte finns.
+- `POST /api/customers` – lägger till en kund (`socialSecurityNumber`, `name`, `annualIncome`, `totalDebt`) och returnerar kreditvärdet. `409 Conflict` om kunden redan finns, `400 Bad Request` vid ogiltig data.
+- `PUT /api/customers/{socialSecurityNumber}` – uppdaterar kundens `annualIncome` och `totalDebt` och returnerar det nya kreditvärdet. `404 Not Found` om kunden saknas, `400 Bad Request` vid ogiltig data.
 
 ## Teknik
 

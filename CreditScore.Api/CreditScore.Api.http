@@ -58,4 +58,42 @@ Content-Type: application/json
   "totalDebt": -1
 }
 
+# ---------- Uppdatera kund (PUT) ----------
+
+### Erik betalar av skuld (180 000 → 90 000) → 200, creditScore 75
+PUT {{CreditScore.Api_HostAddress}}/api/customers/19850515-1234
+Content-Type: application/json
+
+{
+  "annualIncome": 360000,
+  "totalDebt": 90000
+}
+
+### Återställ Erik → 200, creditScore 50
+PUT {{CreditScore.Api_HostAddress}}/api/customers/19850515-1234
+Content-Type: application/json
+
+{
+  "annualIncome": 360000,
+  "totalDebt": 180000
+}
+
+### Okänd kund → 404
+PUT {{CreditScore.Api_HostAddress}}/api/customers/19990909-0000
+Content-Type: application/json
+
+{
+  "annualIncome": 300000,
+  "totalDebt": 0
+}
+
+### Negativ inkomst → 400
+PUT {{CreditScore.Api_HostAddress}}/api/customers/19850515-1234
+Content-Type: application/json
+
+{
+  "annualIncome": -1,
+  "totalDebt": 0
+}
+
 ###

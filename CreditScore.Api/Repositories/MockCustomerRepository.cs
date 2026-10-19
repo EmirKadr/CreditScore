@@ -29,6 +29,25 @@ public class MockCustomerRepository : ICustomerRepository
         return Task.FromResult(_customers.TryAdd(customer.SocialSecurityNumber, customer) ? customer : null);
     }
 
+    public Task<Customer?> UpdateFinancesAsync(string socialSecurityNumber, decimal annualIncome, decimal totalDebt)
+    {
+        if (!_customers.TryGetValue(socialSecurityNumber, out var existing))
+            return Task.FromResult<Customer?>(null);
+
+        // Ersätt med en ny instans i stället för att ändra den delade, så att samtidiga anrop inte ser halvuppdaterad data
+        var updated = new Customer
+        {
+            Id = existing.Id,
+            SocialSecurityNumber = existing.SocialSecurityNumber,
+            Name = existing.Name,
+            AnnualIncome = annualIncome,
+            TotalDebt = totalDebt
+        };
+        _customers[socialSecurityNumber] = updated;
+
+        return Task.FromResult<Customer?>(updated);
+    }
+
     private void Seed(string socialSecurityNumber, string name, decimal annualIncome, decimal totalDebt) =>
         CreateAsync(new Customer
         {

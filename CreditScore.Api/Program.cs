@@ -59,4 +59,23 @@ app.MapPost("/api/customers", async (CreateCustomerRequest request, ICustomerSer
     }
 });
 
+app.MapPut("/api/customers/{socialSecurityNumber}", async (string socialSecurityNumber, UpdateCustomerRequest request, ICustomerService customerService) =>
+{
+    try
+    {
+        var customer = await customerService.UpdateCustomerFinancesAsync(
+            socialSecurityNumber,
+            request.AnnualIncome,
+            request.TotalDebt);
+
+        return customer is null
+            ? Results.NotFound(new { error = $"Kunden med personnummer {socialSecurityNumber} finns inte." })
+            : Results.Ok(new CreditScoreResponse(customer.SocialSecurityNumber, CreditScoreCalculator.Calculate(customer)));
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
 app.Run();

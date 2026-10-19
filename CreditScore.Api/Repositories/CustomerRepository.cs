@@ -46,4 +46,23 @@ public class CustomerRepository(IConfiguration configuration) : ICustomerReposit
             return null;
         }
     }
+
+    public async Task<Customer?> UpdateFinancesAsync(string socialSecurityNumber, decimal annualIncome, decimal totalDebt)
+    {
+        const string sql = """
+            UPDATE dbo.Customers
+            SET AnnualIncome = @AnnualIncome, TotalDebt = @TotalDebt
+            OUTPUT INSERTED.Id, INSERTED.SocialSecurityNumber, INSERTED.Name, INSERTED.AnnualIncome, INSERTED.TotalDebt
+            WHERE SocialSecurityNumber = @SocialSecurityNumber;
+            """;
+
+        using var connection = new SqlConnection(_connectionString);
+
+        return await connection.QuerySingleOrDefaultAsync<Customer>(sql, new
+        {
+            SocialSecurityNumber = socialSecurityNumber,
+            AnnualIncome = annualIncome,
+            TotalDebt = totalDebt
+        });
+    }
 }

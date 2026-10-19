@@ -8,4 +8,7 @@ public interface ICustomerRepository
 
     // Returnerar null om en kund med samma personnummer redan finns
     Task<Customer?> CreateAsync(Customer customer);
+
+    // Returnerar null om kunden inte finns
+    Task<Customer?> UpdateFinancesAsync(string socialSecurityNumber, decimal annualIncome, decimal totalDebt);
 }
