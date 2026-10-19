@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using CreditScore.Api.Models;
 
 namespace CreditScore.Api.Repositories;
@@ -5,13 +6,35 @@ namespace CreditScore.Api.Repositories;
 // Lagrar kunduppgifter i minnet. Datan försvinner när applikationen startas om.
 public class MockCustomerRepository : ICustomerRepository
 {
-    private readonly Dictionary<string, Customer> _customers = new(StringComparer.Ordinal)
+    private readonly ConcurrentDictionary<string, Customer> _customers = new(StringComparer.Ordinal);
+    private int _lastId;
+
+    public MockCustomerRepository()
     {
-        ["19900101-2010"] = new() { Id = 1, SocialSecurityNumber = "19900101-2010", Name = "Anna Svensson", AnnualIncome = 520000, TotalDebt = 150000 },
-        ["19850515-1234"] = new() { Id = 2, SocialSecurityNumber = "19850515-1234", Name = "Erik Johansson", AnnualIncome = 360000, TotalDebt = 180000 },
-        ["19780320-5678"] = new() { Id = 3, SocialSecurityNumber = "19780320-5678", Name = "Maria Lindberg", AnnualIncome = 680000, TotalDebt = 1200000 }
-    };
+        Seed("19900101-2010", "Anna Svensson", 520000, 150000);
+        Seed("19850515-1234", "Erik Johansson", 360000, 180000);
+        Seed("19780320-5678", "Maria Lindberg", 680000, 1200000);
+    }
 
     public Task<Customer?> GetBySocialSecurityNumberAsync(string socialSecurityNumber) =>
         Task.FromResult(_customers.GetValueOrDefault(socialSecurityNumber));
+
+    public Task<Customer?> CreateAsync(Customer customer)
+    {
+        if (_customers.ContainsKey(customer.SocialSecurityNumber))
+            return Task.FromResult<Customer?>(null);
+
+        customer.Id = Interlocked.Increment(ref _lastId);
+
+        return Task.FromResult(_customers.TryAdd(customer.SocialSecurityNumber, customer) ? customer : null);
+    }
+
+    private void Seed(string socialSecurityNumber, string name, decimal annualIncome, decimal totalDebt) =>
+        CreateAsync(new Customer
+        {
+            SocialSecurityNumber = socialSecurityNumber,
+            Name = name,
+            AnnualIncome = annualIncome,
+            TotalDebt = totalDebt
+        });
 }

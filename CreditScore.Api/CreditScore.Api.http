@@ -12,4 +12,50 @@ GET {{CreditScore.Api_HostAddress}}/api/customers/19780320-5678/credit-score
 ### Okänd kund → 404 Not Found
 GET {{CreditScore.Api_HostAddress}}/api/customers/19990909-0000/credit-score
 
+# ---------- Lägg till kund (POST) ----------
+
+### Ny kund utan skuld → 201, creditScore 100
+POST {{CreditScore.Api_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "socialSecurityNumber": "19951111-4321",
+  "name": "Sara Ahmed",
+  "annualIncome": 400000,
+  "totalDebt": 0
+}
+
+### Samma kund igen → 409 Conflict
+POST {{CreditScore.Api_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "socialSecurityNumber": "19951111-4321",
+  "name": "Sara Ahmed",
+  "annualIncome": 400000,
+  "totalDebt": 0
+}
+
+### Felaktigt personnummer → 400
+POST {{CreditScore.Api_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "socialSecurityNumber": "951111-4321",
+  "name": "Fel Format",
+  "annualIncome": 400000,
+  "totalDebt": 0
+}
+
+### Negativ skuld → 400
+POST {{CreditScore.Api_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "socialSecurityNumber": "19880808-8888",
+  "name": "Negativ Skuld",
+  "annualIncome": 400000,
+  "totalDebt": -1
+}
+
 ###

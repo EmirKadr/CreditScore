@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<ICreditScoreService, CreditScoreService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 // Lokalt (Development): SQL Server. I Azure: in-memory, Singleton så att datan lever mellan anrop.
 if (builder.Environment.IsDevelopment())
@@ -33,6 +34,29 @@ app.MapGet("/api/customers/{socialSecurityNumber}/credit-score", async (string s
     return creditScore is null
         ? Results.NotFound(new { error = $"Kunden med personnummer {socialSecurityNumber} finns inte." })
         : Results.Ok(new CreditScoreResponse(socialSecurityNumber, creditScore.Value));
+});
+
+app.MapPost("/api/customers", async (CreateCustomerRequest request, ICustomerService customerService) =>
+{
+    try
+    {
+        var customer = await customerService.CreateCustomerAsync(
+            request.SocialSecurityNumber,
+            request.Name,
+            request.AnnualIncome,
+            request.TotalDebt);
+
+        if (customer is null)
+            return Results.Conflict(new { error = $"Kunden med personnummer {request.SocialSecurityNumber} finns redan." });
+
+        var response = new CreditScoreResponse(customer.SocialSecurityNumber, CreditScoreCalculator.Calculate(customer));
+
+        return Results.Created($"/api/customers/{customer.SocialSecurityNumber}/credit-score", response);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
 });
 
 app.Run();

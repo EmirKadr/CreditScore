@@ -6,6 +6,10 @@ namespace CreditScore.Api.Repositories;
 
 public class CustomerRepository(IConfiguration configuration) : ICustomerRepository
 {
+    // SQL Server-felkoder för brott mot UNIQUE-villkor
+    private const int UniqueConstraintViolation = 2627;
+    private const int UniqueIndexViolation = 2601;
+
     private readonly string _connectionString = configuration.GetConnectionString("Default")
         ?? throw new InvalidOperationException("Anslutningssträngen 'Default' saknas.");
 
@@ -20,5 +24,26 @@ public class CustomerRepository(IConfiguration configuration) : ICustomerReposit
         using var connection = new SqlConnection(_connectionString);
 
         return await connection.QuerySingleOrDefaultAsync<Customer>(sql, new { SocialSecurityNumber = socialSecurityNumber });
+    }
+
+    public async Task<Customer?> CreateAsync(Customer customer)
+    {
+        const string sql = """
+            INSERT INTO dbo.Customers (SocialSecurityNumber, Name, AnnualIncome, TotalDebt)
+            OUTPUT INSERTED.Id
+            VALUES (@SocialSecurityNumber, @Name, @AnnualIncome, @TotalDebt);
+            """;
+
+        using var connection = new SqlConnection(_connectionString);
+
+        try
+        {
+            customer.Id = await connection.QuerySingleAsync<int>(sql, customer);
+            return customer;
+        }
+        catch (SqlException ex) when (ex.Number is UniqueConstraintViolation or UniqueIndexViolation)
+        {
+            return null;
+        }
     }
 }
